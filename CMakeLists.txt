@@ -122,6 +122,7 @@ include_directories(
 ## Declare a C++ library
 add_library(algorithm
   src/algorithm.cpp
+  src/async_detector.cpp
 )
 
 ## Add cmake target dependencies of the library
