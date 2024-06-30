@@ -102,8 +102,8 @@ find_package(catkin REQUIRED COMPONENTS
 ## CATKIN_DEPENDS: catkin_packages dependent projects also need
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
-#  INCLUDE_DIRS include
-#  LIBRARIES async_algorithm_pipeline
+ INCLUDE_DIRS include
+ LIBRARIES task_manager
 #  CATKIN_DEPENDS roscpp rospy
 #  DEPENDS system_lib
 )
@@ -123,6 +123,10 @@ include_directories(
 add_library(algorithm
   src/algorithm.cpp
   src/async_detector.cpp
+)
+
+add_library(task_manager
+  src/task_manager.cpp
 )
 
 ## Add cmake target dependencies of the library
