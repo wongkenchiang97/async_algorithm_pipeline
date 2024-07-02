@@ -2,26 +2,26 @@
 
 namespace task_manager {
 
-template <typename TaskIn, typename TaskOut, typename Worker>
-Work<TaskIn, TaskOut, Worker>::Work()
+template <typename TaskIn, typename TaskOut>
+Worker<TaskIn, TaskOut>::Worker(/* args */)
 {
 }
 
-template <typename TaskIn, typename TaskOut, typename Worker>
-Work<TaskIn, TaskOut, Worker>::~Work()
+template <typename TaskIn, typename TaskOut>
+Worker<TaskIn, TaskOut>::~Worker()
 {
 }
 
-template <typename Work, typename TaskOut>
-Manager<Work, TaskOut>::Manager(size_t num_workers)
+template <typename TaskIn, typename TaskOut>
+Manager<TaskIn, TaskOut>::Manager(size_t num_workers)
 {
     for (size_t i = 0; i < num_workers; i++) {
-        workers_.emplace_back(std::thread(&Manager<Work, TaskOut>::work, this));
+        threads_.emplace_back(std::thread(&Manager<TaskIn, TaskOut>::AssignWork, this));
     }
 }
 
-template <typename Work, typename TaskOut>
-Manager<Work, TaskOut>::~Manager()
+template <typename TaskIn, typename TaskOut>
+Manager<TaskIn, TaskOut>::~Manager()
 {
     {
         std::unique_lock<std::mutex> lock(mt_);
@@ -29,44 +29,45 @@ Manager<Work, TaskOut>::~Manager()
     }
     cv_.notify_all();
 
-    for (auto& worker : workers_) {
-        if (worker.joinable())
-            worker.join();
+    for (auto& thread : threads_) {
+        if (thread.joinable())
+            thread.join();
     }
 }
 
-template <typename Work, typename TaskOut>
-void Manager<Work, TaskOut>::setCallback(std::function<void(TaskOut)> _callback_f)
+template <typename TaskIn, typename TaskOut>
+void Manager<TaskIn, TaskOut>::setCallback(std::function<void(TaskOut)> _callback_f)
 {
     std::unique_lock<std::mutex> lock(mt_);
     callback_ = _callback_f;
 }
 
-template <typename Work, typename TaskOut>
-void Manager<Work, TaskOut>::enqueue(Work _work)
+template <typename TaskIn, typename TaskOut>
+void Manager<TaskIn, TaskOut>::enqueue(typename Work<TaskIn, TaskOut>::Ptr _work)
 {
     std::unique_lock<std::mutex> lock(mt_);
-    works.emplace(std::move(_work.task));
+    works_.emplace(std::move(_work.task));
+    cv_.notify_one();
 }
 
-template <typename Work, typename TaskOut>
-void Manager<Work, TaskOut>::work()
+template <typename TaskIn, typename TaskOut>
+void Manager<TaskIn, TaskOut>::AssignWork()
 {
     while (true) {
         /*Get Task*/
-        Work work;
+        typename Work<TaskIn, TaskOut>::Ptr work;
         {
             std::unique_lock<std::mutex> lock(mt_);
             cv_.wait(lock, [this]() {
-                bool wait_predication = stop || !works.empty();
+                bool wait_predication = stop || !works_.empty();
                 return wait_predication;
             });
 
             if (stop)
                 break;
 
-            work = std::move(works.front());
-            works.pop();
+            work = std::move(works_.front());
+            works_.pop();
         }
 
         /*Execute Task*/
