@@ -41,7 +41,7 @@ public:
 
     Worker(/* args */);
     virtual ~Worker();
-    virtual TaskOut work(TaskIn) = 0;
+    virtual TaskOut work(TaskIn _task_in) = 0;
 
 private:
     virtual Worker<TaskIn, TaskOut>* clone_impl() const = 0;

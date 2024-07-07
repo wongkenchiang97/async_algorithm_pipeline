@@ -41,7 +41,6 @@ Manager<TaskIn, TaskOut, WorkerT>::Manager(Worker worker_prototype, size_t num_w
     : worker_prototype_(worker_prototype)
     , stop(false)
 {
-    std::cout << "worker_prototype_[&]: " << worker_prototype_ << std::endl;
     for (size_t i = 0; i < num_workers; i++) {
         threads_.emplace_back(std::thread(&Manager<TaskIn, TaskOut, WorkerT>::manage, this));
     }
@@ -83,7 +82,6 @@ void Manager<TaskIn, TaskOut, WorkerT>::enqueue(TaskIn _task_in)
     std::unique_lock<std::mutex> lock(mt_);
     auto work = Work<TaskIn, TaskOut, WorkerT>::create(_task_in, worker_prototype_->clone());
     works_.emplace(std::move(work));
-    std::cout << "works_[size]: " << works_.size() << std::endl;
     cv_.notify_one();
 }
 
@@ -108,7 +106,6 @@ void Manager<TaskIn, TaskOut, WorkerT>::manage()
         }
 
         /*Execute Task*/
-        std::cout << "work->task()." << std::endl;
         work->task();
         if (callback_ == nullptr)
             continue;
