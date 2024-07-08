@@ -55,7 +55,7 @@ public:
     Manager(Worker worker_prototype, size_t num_workers = std::thread::hardware_concurrency());
     virtual ~Manager();
     static typename Manager<TaskIn, TaskOut, WorkerT>::Ptr create(Worker worker_prototype, size_t num_workers = std::thread::hardware_concurrency());
-    void enqueue(TaskIn _task_in);
+    typename Work<TaskIn, TaskOut, WorkerT>::Output enqueue(TaskIn _task_in);
     void setCallback(std::function<void(TaskOut)> _callback_f);
 
 protected:
